@@ -77,32 +77,30 @@ def get_cells_data(df) ->tuple [np.array] :
     """create Dataframe of cells"""
     cells=df[["eNodeB identity",'Cell ID','eNodeB_identifier_int']].sort_values(by='eNodeB_identifier_int')
     cells=cells.drop_duplicates()
-    #cells_2=cells.iloc[:500]  # to limit to first 500 CELLS
+    #cells_2=cells.iloc[:20]  # to limit to first 500 CELLS
 
     data=[]
     data_trafic=[]
 
     """ loop on Dataframe of cells to filter data of each cell"""
     for index, row in cells.iterrows():
-        df_cell=df[(df["eNodeB identity"]==row[0]) & (df["Cell ID"]==row[1])]
-        df_cell=df_cell.sort_values(by='eNodeB_identifier_int')
+        df_cell=df[(df["eNodeB identity"]==row[0]) & (df["Cell ID"]==row[1])].sort_values(by='Date')
+
         df_cell=df_cell.reset_index(drop=True)
-        df_cell_1=df_cell.copy()
-        df_cell_1.drop(['Date','eNodeB identity', 'Cell ID', 'eNodeB_identifier_int'], axis=1, inplace=True)
 
-        df_cell_trafic=df[(df["eNodeB identity"]==row[0]) & (df["Cell ID"]==row[1])]
-        df_cell_trafic=df_cell.sort_values(by='eNodeB_identifier_int')
-        df_cell_trafic=pd.DataFrame(df_cell.reset_index(drop=True))
+        #df_cell_1=df_cell.copy()
+        df_cell.drop(['Date','eNodeB identity', 'Cell ID', 'eNodeB_identifier_int'], axis=1, inplace=True)
 
-        df_cell_trafic=df_cell_trafic["Trafic LTE.float"]
+        df_cell_trafic=df_cell["Trafic LTE.float"]
 
-        data.append(df_cell_1)
+
+        data.append(df_cell)
         data_trafic.append(df_cell_trafic)
-
-    cells_data=np.array(data)
-    cells_data_trafic=np.array(data_trafic)
-
-    return cells, cells_data, cells_data_trafic
+    """
+          cells_data=np.array(data)
+          cells_data_trafic=np.array(data_trafic)
+    """
+    return cells, np.array(data), np.array(data_trafic)
 
 """ Split data of each cell into train val and test """
 def train_test_val_split(data_cell:pd.DataFrame,

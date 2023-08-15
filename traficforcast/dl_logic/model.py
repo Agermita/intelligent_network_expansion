@@ -46,12 +46,13 @@ def initialize_model(input_shape: tuple, output_length) -> models:
     model = models.Sequential()
     ## 1.1 - Recurrent Layer
     model.add(layers.Masking(mask_value=-10, input_shape=input_shape))
-
-    model.add(layers.GRU(units=64,
+    #
+    model.add(layers.GRU(units=16,
                         activation='relu',
                         return_sequences = False,
                         kernel_regularizer=L1L2(l1=0.05, l2=0.05),
                         ))
+
 
     ## 1.2 - Predictive Dense Layers
 
@@ -72,13 +73,11 @@ def compile_model(model: models) -> models:
     # ======================
     initial_learning_rate = 0.01
 
-    #lr_schedule = ExponentialDecay(initial_learning_rate, decay_steps=1000, decay_rate=0.5)
+    lr_schedule = ExponentialDecay(initial_learning_rate, decay_steps=1000, decay_rate=0.5)
 
-    #adam = optimizers.Adam(learning_rate=initial_learning_rate)
-    #model.compile(loss='mse', optimizer="adam", metrics=["mae"])
-    #adam = optimizers.Adam(0.001, clipnorm=1.)
-    #model.compile(loss="mse",  optimizer=adam, metrics=['mae'])
-    model.compile(loss='mse', optimizer="rmsprop", metrics=['mae'])
+    adam = optimizers.Adam(learning_rate=lr_schedule)
+
+    model.compile(loss='mse', optimizer=adam, metrics=["mae"])
     return model
 
 def train_model(
