@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 import datetime
 """
@@ -77,7 +78,7 @@ def get_cells_data(df) ->tuple [np.array] :
     """create Dataframe of cells"""
     cells=df[["eNodeB identity",'Cell ID','eNodeB_identifier_int']].sort_values(by='eNodeB_identifier_int')
     cells=cells.drop_duplicates()
-    cells=cells.iloc[:200]  # to limit to first 200 CELLS
+    cells=cells.iloc[:2000]  # to limit to first 200 CELLS
 
     data=[]
     data_trafic=[]
@@ -311,3 +312,37 @@ def data_hist_predicted(y, y_pred, cells, start_date, end_date):
     cell_data_final2['Flag '] = ['Real' if x <= end_date else 'Predicted' for x in cell_data_final2['Date']]
 
     return cell_data_final2
+
+
+def generate_X_y(df=None,
+    file_path = os.path.join('raw_data','data.csv'))-> tuple [pd.DataFrame]:
+    if df==None: # import preprocessed data from csv file
+        print ("geting processed data from csv file")
+        processed_data = pd.read_csv(file_path, sep=',')
+
+        processed_data.drop('Unnamed: 0', axis=1, inplace=True)
+    else: # work directly with the dataframe output of data preprocessing
+        processed_data=df
+
+    processed_data['Date'] = pd.to_datetime(processed_data['Date'], format='%Y-%m-%d')
+    """
+    processed_data.loc[processed_data['Trafic LTE.float'] ==-10, ('Cell FDD TDD Indication_CELL_FDD', 'Cell FDD TDD Indication_CELL_TDD',
+       'Downlink EARFCN_Band_1', 'Downlink EARFCN_Band_2',
+       'Downlink EARFCN_Band_3', 'Downlink EARFCN_Band_4',
+       'Downlink EARFCN_Band_5', 'Downlink bandwidth_CELL_BW_N100',
+       'Downlink bandwidth_CELL_BW_N50', 'LTECell Tx and Rx Mode_1T1R',
+       'LTECell Tx and Rx Mode_2T2R', 'LTECell Tx and Rx Mode_2T4R',
+       'LTECell Tx and Rx Mode_4T4R', 'LTECell Tx and Rx Mode_8T8R',
+       'City_City_1', 'City_City_3', 'City_City_4', 'City_City_5',
+       'City Type_Rural', 'City Type_Urbain', 'City Type_Urbain dense')] = -10
+    """
+    cells, cells_data, cells_data_trafic=get_cells_data(processed_data)
+    columns=list(processed_data.columns)
+    columns.remove('Date')
+    columns.remove('eNodeB identity')
+    columns.remove('Cell ID')
+    columns.remove('eNodeB_identifier_int')
+    X_train, y_train, X_val, y_val, X_test, y_test, X_to_predict=get_X_y_all(cells_data, columns, 30)
+    end_date=processed_data['Date'].max()
+    start_date=processed_data['Date'].min()
+    return X_train, y_train, X_val, y_val, X_test, y_test, X_to_predict, cells, cells_data_trafic, start_date, end_date
